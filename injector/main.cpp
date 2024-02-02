@@ -7,38 +7,45 @@ std::vector<MODULE> modules, LoadedModules;
 
 int main(int argc, char* argv[])
 {
-    int status = 1;
+    int status = 0;
+    char config = 0;
     char ProcessName[MAX_PATH], FileName[MAX_PATH];
 
-    if (argc >= 3)
+    std::string buffer(MAX_PATH, NULL);
+    GetModuleFileNameA(nullptr, buffer.data(), MAX_PATH);
+
+    std::fstream file(buffer.substr(0, buffer.find_last_of('\\') + 1) + "cfg.txt");
+    if (file.fail()) return -1;
+
+    for (int x = 1; x < argc; ++x)
     {
-        strcpy_s(ProcessName, MAX_PATH, argv[1]);
-        strcpy_s(FileName, MAX_PATH, argv[2]);
+        if (argv[x][0] == '-')
+        {
+            if (_stricmp(argv[x], "-save") == 0)
+            {
+                file << ProcessName << '\n';
+                file << FileName << '\n';
+            }
+            else if (_stricmp(argv[x], "-hijack")) config &= 1;
+        }
+        else
+        {
+            if (!status)
+            {
+                strcpy_s(ProcessName, MAX_PATH, argv[x]);
+                status = 1;
+            }
+            else strcpy_s(FileName, MAX_PATH, argv[x]);
+        }
     }
 
-    //Loading or saving target data
-    if (argc == 1 || argc == 4)
+    if (!status)
     {
-        //If the executable path isnt prefixed to cfg.txt, the command directory will be used by fstream unless cd'd to injector dir
-        std::string buffer(MAX_PATH, NULL);
-        GetModuleFileNameA(nullptr, buffer.data(), MAX_PATH);
-
-        std::fstream file(buffer.substr(0, buffer.find_last_of('\\') + 1) + "cfg.txt");
-        if (file.fail()) return -1;
-
-        if (argc == 1)
-        {
-            file.getline(ProcessName, MAX_PATH);
-            file.getline(FileName, MAX_PATH);
-        }
-        else if (_stricmp(argv[3], "-save") == 0)
-        {
-            file << ProcessName << '\n';
-            file << FileName << '\n';
-        }
-
-        file.close();
+        file.getline(ProcessName, MAX_PATH);
+        file.getline(FileName, MAX_PATH);
+        status = 1;
     }
+    file.close();
 
     //Load user specified DLL
     modules.push_back({});
@@ -104,7 +111,8 @@ int main(int argc, char* argv[])
                     //Running DllMain via thread hijacking
                     if (status == 1)
                     {
-                        status = HijackThread();
+                        if (config & 1) status = HijackThread();
+                        else  status = CreateNewThread();
                         if (status == 1) std::cout << "Successfully mapped dll!\n";
                     }
                 }

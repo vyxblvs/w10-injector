@@ -112,6 +112,7 @@ int HijackThread()
 				thread = OpenThread(THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME, false, te32.th32ThreadID);
 				if (thread) break; 
 			}
+
 		} while (Thread32Next(snapshot, &te32));
 	}
 	CloseHandle(snapshot);
@@ -124,7 +125,7 @@ int HijackThread()
 		return -19;
 	}
 
-	int status = false;
+	int status = 1;
 	constexpr int reserved = NULL;
 	constexpr int reason = DLL_PROCESS_ATTACH;
 
@@ -154,4 +155,34 @@ exit:
 	ResumeThread(thread);
 	CloseHandle(thread);
 	return status;
+}
+
+
+int CreateNewThread()
+{
+	BYTE shellcode[] =
+	{
+		0x8B, 0x04, 0x24,                               // mov eax, [esp]
+		0xC7, 0x04, 0x24, 0x00, 0x00, 0x00, 0x00,       // mov [esp], 0          (0:    lpvReserved)
+		0xC7, 0x44, 0x24, 0xFC, 0x01, 0x00, 0x00, 0x00, // mov [esp-4], 1        (1:    DLL_PROCESS_ATTACH | fdwReason)
+		0xC7, 0x44, 0x24, 0xF8, 0x00, 0x00, 0x00, 0x00, // mov [esp-8], 0        (0:    PLACEHOLDER FOR hinstDLL)
+		0x83, 0xEC, 0x0C,                               // sub esp, 0xC
+		0x89, 0x04, 0x24,                               // mov [esp], eax        (eax:  return address)
+		0xE9, 0x00, 0x00, 0x00, 0x00                    // jmp 0                 (0:    PLACEHOLDER FOR ENTRY POINT)
+	};
+
+	void* const ShellAddress = VirtualAllocEx(process, nullptr, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	if (!ShellAddress) return -26;
+
+	const MODULE& TargetModule = modules[0];
+	const DWORD EntryPoint = TargetModule.image.NT_HEADERS->OptionalHeader.AddressOfEntryPoint + TargetModule.ImageBase;
+
+	*reinterpret_cast<DWORD*>(shellcode + 33) = EntryPoint - (reinterpret_cast<DWORD>(ShellAddress) + 37); // ENTRY POINT
+	*reinterpret_cast<DWORD*>(shellcode + 22) = TargetModule.ImageBase; // hinstDLL
+
+	if (!wpm(ShellAddress, shellcode, sizeof(shellcode))) return -27;
+
+	if (!CreateRemoteThread(process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(ShellAddress), nullptr, 0, nullptr)) return -28;
+
+	return 1;
 }

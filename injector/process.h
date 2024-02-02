@@ -11,6 +11,8 @@ int MapDll(const MODULE* const target);
 
 int HijackThread();
 
+int CreateNewThread();
+
 //Macros
 
 #define wpm(address, buffer, size) WriteProcessMemory(process, reinterpret_cast<void*>(address), buffer, size, nullptr)
