@@ -89,10 +89,45 @@ int MapDll(const MODULE* const target)
 	}
 
 	return 1;
-} 
+}
 
 
-int HijackThread()
+void* GetTlsEp(void* EntryPoint)
+{
+	BYTE shellcode[] =
+	{
+		0x31, 0xC0,                   // xor eax, eax
+		0xBB, 0x00, 0x00, 0x00, 0x00, // mov ebx, 0                (0: PLACEHOLDER FOR TLS ADDR ARRAY)
+		0x8B, 0x0C, 0x83,             // mov ecx, [ebx+eax*4]
+		0x85, 0xC9,                   // test ecx, ecx
+		0x74, 0x0D,                   // je 0x0D                   (je 0x0D -> jmp 0)
+		0x6A, 0x00,                   // push 0                    (0:       lpvReserved)
+		0x6A, 0x01,                   // push 1                    (1:       dwReason | DLL_PROCESS_ATTACH)
+		0xFF, 0x74, 0x24, 0x0C,       // push [esp+0x0C]           (esp+0xC: DllBase)
+		0xFF, 0xD1,                   // call ecx                  (ecx:     TLS CALLBACK ADDRESS)
+		0x40,                         // inc eax
+		0xEB, 0xEC,                   // jmp -18                   (jmp -18 -> mov ecx, [ebx+eax*4])
+		0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0                (0: PLACEHOLDER FOR ENTRY POINT)
+		0xFF, 0xE0                    // jmp eax
+	};
+
+	const MODULE& TargetModule = modules[0];
+	const auto TlsDirectory = ConvertRva<const IMAGE_TLS_DIRECTORY32*>(TargetModule.image.LocalBase, DATA_DIR((&TargetModule.image), IMAGE_DIRECTORY_ENTRY_TLS).VirtualAddress, &TargetModule.image);
+
+	// The TLS directory is resolved in ResolveImports, and then mapped into memory. TlsDirectory->AddressOfCallBacks is valid.
+	*reinterpret_cast<DWORD*>(shellcode + 3) = TlsDirectory->AddressOfCallBacks;
+	*reinterpret_cast<void**>(shellcode + 28) = EntryPoint;
+
+	void* AllocatedMem = __VirtualAllocEx(sizeof(shellcode), PAGE_EXECUTE_READWRITE);
+	if (!AllocatedMem) return nullptr;
+
+	if (!wpm(AllocatedMem, shellcode, sizeof(shellcode))) return nullptr;
+
+	return AllocatedMem;
+}
+
+
+int HijackThread(const int cfg)
 {
 	const HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, NULL);
 	if (snapshot == INVALID_HANDLE_VALUE) return -17;
@@ -126,28 +161,27 @@ int HijackThread()
 	}
 
 	int status = 1;
-	constexpr int reserved = NULL;
-	constexpr int reason = DLL_PROCESS_ATTACH;
+	_stack_params stack_params;
 
 	//Getting thread context (GPR's only)
 	WOW64_CONTEXT context { NULL };
 	context.ContextFlags = WOW64_CONTEXT_CONTROL;
 	if (!Wow64GetThreadContext(thread, &context)) { status = -20; goto exit; }
 
-	// Pushing DllMain parameters & return address onto thread stack
-	context.Esp -= 4; // LPVOID lpvReserved
-	if (!wpm(context.Esp, &reserved, sizeof(LPVOID))) { status = -21; goto exit; }
+	context.Esp -= 16;
+	stack_params.hinstDLL = modules[0].ImageBase;
+	stack_params.ReturnAddress = context.Eip;
 
-	context.Esp -= 4; // DWORD fdwReason
-	if (!wpm(context.Esp, &reason, sizeof(DWORD))) { status = -22; goto exit; }
+	if (!wpm(context.Esp, &stack_params, sizeof(_stack_params))) return -21;
 
-	context.Esp -= 4; // HINSTANCE hinstDLL
-	if (!wpm(context.Esp, &modules[0].ImageBase, sizeof(HINSTANCE))) { status = -23; goto exit; }
+	context.Eip = GET_ENTRY_POINT(modules[0].image, modules[0].ImageBase);
 
-	context.Esp -= 4; // Return address
-	if (!wpm(context.Esp, &context.Eip, sizeof(DWORD))) { status = -24; goto exit; }
+	if (cfg & RUN_TLS_CALLBACKS)
+	{
+		context.Eip = reinterpret_cast<DWORD>(GetTlsEp(reinterpret_cast<void*>(context.Eip)));
+		if (!context.Eip) return -69;
+	}
 
-	context.Eip = modules[0].ImageBase + modules[0].image.NT_HEADERS->OptionalHeader.AddressOfEntryPoint;
 	status = Wow64SetThreadContext(thread, &context);
 	if (!status) { status = -25; goto exit; }
 
@@ -158,7 +192,7 @@ exit:
 }
 
 
-int CreateNewThread()
+int CreateNewThread(const int cfg)
 {
 	BYTE shellcode[] =
 	{
@@ -171,18 +205,24 @@ int CreateNewThread()
 		0xE9, 0x00, 0x00, 0x00, 0x00                    // jmp 0                 (0:    PLACEHOLDER FOR ENTRY POINT)
 	};
 
-	void* const ShellAddress = VirtualAllocEx(process, nullptr, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	void* ShellAddress = __VirtualAllocEx(sizeof(shellcode), PAGE_EXECUTE_READWRITE);
 	if (!ShellAddress) return -26;
 
 	const MODULE& TargetModule = modules[0];
-	const DWORD EntryPoint = TargetModule.image.NT_HEADERS->OptionalHeader.AddressOfEntryPoint + TargetModule.ImageBase;
+	const DWORD EntryPoint = GET_ENTRY_POINT(TargetModule.image, TargetModule.ImageBase);
 
 	*reinterpret_cast<DWORD*>(shellcode + 33) = EntryPoint - (reinterpret_cast<DWORD>(ShellAddress) + 37); // ENTRY POINT
 	*reinterpret_cast<DWORD*>(shellcode + 22) = TargetModule.ImageBase; // hinstDLL
 
 	if (!wpm(ShellAddress, shellcode, sizeof(shellcode))) return -27;
 
-	if (!CreateRemoteThread(process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(ShellAddress), nullptr, 0, nullptr)) return -28;
+	if (cfg & RUN_TLS_CALLBACKS)
+	{
+		ShellAddress = GetTlsEp(ShellAddress);
+		if (!ShellAddress) return -28;
+	}
+
+	if (!CreateRemoteThread(process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(ShellAddress), nullptr, 0, nullptr)) return -29;
 
 	return 1;
 }

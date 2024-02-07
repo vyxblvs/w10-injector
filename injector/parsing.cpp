@@ -32,22 +32,6 @@ int GetDll(const char* const path, IMAGE_DATA* const buffer)
 }
 
 
-template <typename ret> auto ConvertRva(const void* const base, const DWORD rva, const IMAGE_DATA* const image)->ret
-{
-	const IMAGE_SECTION_HEADER* SectionHeader = image->sections;
-
-	for (UINT x = 0; x < image->NT_HEADERS->FileHeader.NumberOfSections; ++x)
-	{
-		if (rva >= SectionHeader[x].VirtualAddress && rva <= (SectionHeader[x].VirtualAddress + SectionHeader[x].Misc.VirtualSize))
-		{
-			return reinterpret_cast<ret>(reinterpret_cast<DWORD>(base) + SectionHeader[x].PointerToRawData + (rva - SectionHeader[x].VirtualAddress));
-		}
-	}
-
-	return reinterpret_cast<ret>(-50);
-}
-
-
 template <typename ptr> int FindModule(const char* const name, ptr buffer, const bool ReturnIndex = false)
 {
 	std::string path;
@@ -270,7 +254,7 @@ int ResolveImports(const IMAGE_DATA* const image)
 			{
 				FindModuleDirWrapper(ModuleName, ModulePtr->image.path);
 			}
-			ModulePtr->handle = LoadLibraryA(ModulePtr->image.path);
+			ModulePtr->handle = LoadLibraryExA(ModulePtr->image.path, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 		}
 
 		const auto ImportTable = ConvertRva<IMAGE_THUNK_DATA32*>(MappedAddress, ImportDir[x].FirstThunk, image);
@@ -294,7 +278,7 @@ int ResolveImports(const IMAGE_DATA* const image)
 				ModulePtr = GetForwarderModule(ModulePtr, ImportName, &ImportName);
 
 				if(!ModulePtr->handle && (!ModulePtr->image.NT_HEADERS || DATA_DIR((&ModulePtr->image), IMAGE_DIRECTORY_ENTRY_IMPORT).Size)) 
-					ModulePtr->handle = LoadLibraryA(ModulePtr->image.path);
+					ModulePtr->handle = LoadLibraryExA(ModulePtr->image.path, nullptr, DONT_RESOLVE_DLL_REFERENCES);
 
 				goto retry;
 			}

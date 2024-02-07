@@ -26,7 +26,8 @@ int main(int argc, char* argv[])
                 file << ProcessName << '\n';
                 file << FileName << '\n';
             }
-            else if (_stricmp(argv[x], "-hijack")) config &= 1;
+            else if (_stricmp(argv[x], "-hijack") == 0) config |= HIJACK_THREAD;
+            else if (_stricmp(argv[x], "-tls") == 0) config |= RUN_TLS_CALLBACKS;
         }
         else
         {
@@ -62,7 +63,7 @@ int main(int argc, char* argv[])
             {
                 if (IS_API_SET(modules[x].image)) continue;
 
-                modules[x].ImageBase = reinterpret_cast<DWORD>(VirtualAllocEx(process, nullptr, modules[x].image.NT_HEADERS->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+                modules[x].ImageBase = reinterpret_cast<DWORD>(__VirtualAllocEx(modules[x].image.NT_HEADERS->OptionalHeader.SizeOfImage, PAGE_EXECUTE_READWRITE));
                 if (!modules[x].ImageBase) 
                 {
                     status = -8; 
@@ -111,15 +112,17 @@ int main(int argc, char* argv[])
                     //Running DllMain via thread hijacking
                     if (status == 1)
                     {
-                        if (config & 1) status = HijackThread();
-                        else  status = CreateNewThread();
-                        if (status == 1) std::cout << "Successfully mapped dll!\n";
+                        if (config & HIJACK_THREAD) status = HijackThread(config);
+                        else status = CreateNewThread(config);
                     }
                 }
             }
         }
     }
     
+    if (status == 1) std::cout << "Successfully mapped dll!\n";
+    else std::cout << "ERR: " << status << '\n';
+
     CloseHandle(process);
     return status;
 }

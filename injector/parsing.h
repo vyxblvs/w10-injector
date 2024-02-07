@@ -40,3 +40,19 @@ int ResolveImports(const IMAGE_DATA* const target);
 #define IS_API_SET(image) DATA_DIR((&image), IMAGE_DIRECTORY_ENTRY_IMPORT).Size == 0
 
 #define SHOULD_RELOCATE(ModulePtr) ModulePtr.ImageBase != ModulePtr.image.NT_HEADERS->OptionalHeader.ImageBase && DATA_DIR((&ModulePtr.image), IMAGE_DIRECTORY_ENTRY_BASERELOC).Size
+
+
+template <typename ret> auto ConvertRva(const void* const base, const DWORD rva, const IMAGE_DATA* const image) -> ret
+{
+	const IMAGE_SECTION_HEADER* SectionHeader = image->sections;
+
+	for (UINT x = 0; x < image->NT_HEADERS->FileHeader.NumberOfSections; ++x)
+	{
+		if (rva >= SectionHeader[x].VirtualAddress && rva <= (SectionHeader[x].VirtualAddress + SectionHeader[x].Misc.VirtualSize))
+		{
+			return reinterpret_cast<ret>(reinterpret_cast<DWORD>(base) + SectionHeader[x].PointerToRawData + (rva - SectionHeader[x].VirtualAddress));
+		}
+	}
+
+	return reinterpret_cast<ret>(-50);
+}
