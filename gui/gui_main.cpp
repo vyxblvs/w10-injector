@@ -218,6 +218,7 @@ void ShowConfigOptions(std::vector<std::string>& ModuleList, char pid[6], _confi
 					ProcessPreview = "No Process Selected";
 					preview = DefaultPreview;
 
+					CurrentProcess = -1;
 					cfg = _config{};
 				}
 
@@ -264,7 +265,7 @@ void ShowSettings(std::vector<std::string>& ModuleList, char pid[6], _config& cf
 		ToolTip("WARNING: Please only select thread hijacking if you're sure that thread desynchronization is not a risk!");
 
 
-		CheckboxEx("Run TLS callbacks",       &cfg.RunTlsCallbacks);
+		CheckboxEx("Run TLS callbacks", &cfg.RunTlsCallbacks);
 
 		if (CheckboxEx("Filter by handle rights", &cfg.CheckHandles))
 		{
@@ -295,7 +296,7 @@ void ShowSettings(std::vector<std::string>& ModuleList, char pid[6], _config& cf
 
 		CheckboxEx("Case sensitive filtering", &cfg.CaseSensitiveFilter);
 
-		CheckboxEx("Save Config",              &cfg.SaveConfig);
+		CheckboxEx("Save Config", &cfg.SaveConfig);
 
 		ImGui::PopItemWidth();
 		ImGui::EndChild();
@@ -315,9 +316,13 @@ void ShowDllOptions(OPENFILENAMEA* const ofn, std::vector<std::string>& ModuleLi
 	
 	if (ImGui::BeginChild("Dll Options", size))
 	{
+		bool IsSelected;
+
 		for (int x = 0; x < ModuleList.size(); ++x)
 		{
-			if (SelectedDll == x)
+			IsSelected = (SelectedDll == x);
+
+			if (IsSelected)
 			{
 				constexpr ImVec4 LightGrey = { 0.1562745, 0.1562745, 0.1562745, 1 };
 				ImGui::PushStyleColor(ImGuiCol_Header, LightGrey);
@@ -325,7 +330,7 @@ void ShowDllOptions(OPENFILENAMEA* const ofn, std::vector<std::string>& ModuleLi
 
 			if (ImGui::Selectable(ModuleList[x].c_str(), &SelectedDll)) SelectedDll = x;
 
-			if (SelectedDll == x) ImGui::PopStyleColor();
+			if (IsSelected) ImGui::PopStyleColor();
 		}
 
 		ImGui::EndChild();

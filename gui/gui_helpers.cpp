@@ -89,7 +89,7 @@ void InitFileDialog(OPENFILENAMEA& ofn, char* FileName, GLFWwindow* window)
 	ofn.lpstrFile    = FileName;
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrFilter  = "Dynamic Link Libraries (.dll)\0*.DLL";
+	ofn.lpstrFilter  = "Dynamic Link Library (.dll)\0*.DLL";
 	ofn.nFilterIndex = 1;
 	ofn.Flags        = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 }
