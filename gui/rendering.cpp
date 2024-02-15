@@ -77,9 +77,13 @@ GLFWwindow* InitializeMenu()
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigWindowsResizeFromEdges = false;
 
+	std::string dir(MAX_PATH, 0);
+	GetModuleFileNameA(nullptr, dir.data(), MAX_PATH);
+	
+	dir.erase(dir.find_last_of("\\") + 1);
+	dir += "arial.ttf"; // i'll put this in the zip of a release build if i make one, until then it doesn't really matter
 
-
-	io.Fonts->AddFontFromFileTTF("c:\\users\\john\\source\\repos\\gui\\gui\\arial.ttf", 16);
+	io.Fonts->AddFontFromFileTTF(dir.c_str(), 16);
 	io.FontDefault = io.Fonts->Fonts[0];
 
 	return window;

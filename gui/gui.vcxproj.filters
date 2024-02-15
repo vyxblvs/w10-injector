@@ -104,9 +104,6 @@
     <ClInclude Include="include\ImGui\imstb_truetype.h">
       <Filter>Header Files\gui</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image.h">
-      <Filter>Header Files\gui</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="include\libs\glfw3.lib">
