@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "injector", "injector\injector.vcxproj", "{FE7A8839-D64C-458A-B821-A8E8206E8A52}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gui", "gui\gui.vcxproj", "{80E6DA32-6529-424B-A18B-8BBFAD7F8405}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{FE7A8839-D64C-458A-B821-A8E8206E8A52}.Release|x64.Build.0 = Release|x64
 		{FE7A8839-D64C-458A-B821-A8E8206E8A52}.Release|x86.ActiveCfg = Release|Win32
 		{FE7A8839-D64C-458A-B821-A8E8206E8A52}.Release|x86.Build.0 = Release|Win32
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Debug|x64.ActiveCfg = Debug|x64
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Debug|x64.Build.0 = Debug|x64
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Debug|x86.ActiveCfg = Debug|Win32
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Debug|x86.Build.0 = Debug|Win32
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Release|x64.ActiveCfg = Release|x64
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Release|x64.Build.0 = Release|x64
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Release|x86.ActiveCfg = Release|Win32
+		{80E6DA32-6529-424B-A18B-8BBFAD7F8405}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
