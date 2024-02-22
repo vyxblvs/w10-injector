@@ -1,2 +1,1 @@
-# Usage
-Using it is pretty simple, you just run it from command line, the first argument is the process name and the second is the directory of the dll, and you can add an argument of "-save" to save that process name and DLL directory to a config file if you know you are gonna be reinjecting the same thing into the same process in the future, and dont want to provide arguments manually each time.
+
