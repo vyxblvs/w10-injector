@@ -2,8 +2,6 @@
 #include "process_gui.h"
 #include "gui_helpers.h"
 
-#pragma warning(disable:4996)
-
 extern std::vector<std::string> ProcessList;
 extern std::vector<DWORD> PidList;
 
@@ -35,7 +33,8 @@ bool GetProcessList(const std::string& filter, const _config& cfg)
 
 		do
 		{
-			wcstombs(ProcessName, pe32.szExeFile, MAX_PATH);
+			static size_t num;
+			wcstombs_s(&num, ProcessName, pe32.szExeFile, MAX_PATH);
 
 			if (!filter.empty())
 			{
@@ -91,7 +90,11 @@ int HandlePidInput(const int pid)
 				return x;
 			}
 		}
+
+		MessageBoxW(nullptr, L"The process associated with the specified PID could not be found. Did it close mid search?", L"ERROR", MB_ICONERROR);
+		return 0;
 	}
 
+	MessageBoxW(nullptr, L"A handle to the process associated with the specified PID cannot be opened!", L"INVALID HANDLE", MB_ICONERROR);
 	return 0;
 }

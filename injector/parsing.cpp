@@ -21,12 +21,12 @@ int GetDll(const char* const path, IMAGE_DATA* const buffer)
 		buffer->path = new char[MAX_PATH];
 		strcpy_s(buffer->path, MAX_PATH, path);
 	}
-
+	
 	buffer->LocalBase = image_ptr;
-	buffer->NT_HEADERS = reinterpret_cast<IMAGE_NT_HEADERS32*>(image_ptr + *reinterpret_cast<DWORD*>(image_ptr + 0x3C));
+	buffer->NT_HEADERS = reinterpret_cast<IMAGE_NT_HEADERS64*>(image_ptr + *reinterpret_cast<DWORD64*>(image_ptr + 0x3C));
 	buffer->sections = IMAGE_FIRST_SECTION(buffer->NT_HEADERS);
 
-	if (buffer->NT_HEADERS->FileHeader.Machine != 0x14C) return -4;
+	if (buffer->NT_HEADERS->FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64) return -4;
 
 	return 1;
 }
@@ -136,7 +136,7 @@ int GetDependencies(const int i)
 	//No pointers to modules[i] are created because the increase in size caused by FindModuleDir triggers relocation of the vector, invalidating any pointers to it.
 	const auto ImportDirTable = ConvertRva<const IMAGE_IMPORT_DESCRIPTOR*>(modules[i].image.LocalBase, DATA_DIR((&modules[i].image), IMAGE_DIRECTORY_ENTRY_IMPORT).VirtualAddress, &modules[i].image);
 
-	for (UINT x = 0; ImportDirTable[x].Characteristics; ++x)
+	for (DWORD x = 0; ImportDirTable[x].Characteristics; ++x)
 	{
 		const auto ModuleName = ConvertRva<const char*>(modules[i].image.LocalBase, ImportDirTable[x].Name, &modules[i].image);
 
@@ -173,9 +173,9 @@ void ApplyReloction(const MODULE* TargetModule)
 
 	auto RelocBlock = ConvertRva<IMAGE_BASE_RELOCATION*>(image->LocalBase, DataDir.VirtualAddress, image);
 	const BYTE* const FinalEntry = reinterpret_cast<BYTE*>(RelocBlock) + DataDir.Size;
-
-	const DWORD PreferredBase = image->NT_HEADERS->OptionalHeader.ImageBase;
-	const DWORD TargetBase    = TargetModule->ImageBase;
+	
+	const DWORD64 PreferredBase = image->NT_HEADERS->OptionalHeader.ImageBase;
+	const DWORD64 TargetBase    = TargetModule->ImageBase;
 
 	while (reinterpret_cast<BYTE*>(RelocBlock) < FinalEntry)
 	{
@@ -183,7 +183,7 @@ void ApplyReloction(const MODULE* TargetModule)
 
 		for (UINT y = 0; entry[y] && y < (RelocBlock->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD); ++y)
 		{
-			DWORD* const RelocAddress = ConvertRva<DWORD*>(image->LocalBase, (entry[y] % 0x1000) + RelocBlock->VirtualAddress, image);
+			DWORD64* const RelocAddress = ConvertRva<DWORD64*>(image->LocalBase, (entry[y] % 0x1000) + RelocBlock->VirtualAddress, image);
 			*RelocAddress = (*RelocAddress - PreferredBase) + TargetBase;
 		}
 
@@ -198,9 +198,9 @@ MODULE* GetForwarderModule(MODULE* ModulePtr, const char* const ImportName, cons
 	const auto MappedAddress = image->LocalBase;
 	const auto ExportDirData = DATA_DIR(image, IMAGE_DIRECTORY_ENTRY_EXPORT);
 	const auto ExportDir     = ConvertRva<IMAGE_EXPORT_DIRECTORY*>(MappedAddress, ExportDirData.VirtualAddress, image);
-	const auto NamePtrTable  = ConvertRva<DWORD*>(MappedAddress, ExportDir->AddressOfNames,        image);
-	const auto OrdinalTable  = ConvertRva<WORD*> (MappedAddress, ExportDir->AddressOfNameOrdinals, image);
-	const auto ExportTable   = ConvertRva<DWORD*>(MappedAddress, ExportDir->AddressOfFunctions,    image);
+	const auto NamePtrTable  = ConvertRva<DWORD64*>(MappedAddress, ExportDir->AddressOfNames, image);
+	const auto OrdinalTable  = ConvertRva<WORD*>(MappedAddress, ExportDir->AddressOfNameOrdinals, image);
+	const auto ExportTable   = ConvertRva<DWORD64*>(MappedAddress, ExportDir->AddressOfFunctions, image);
 
 	for (UINT x = 0; x < ExportDir->NumberOfFunctions; ++x)
 	{
@@ -269,8 +269,8 @@ int ResolveImports(const IMAGE_DATA* const image)
 
 			if (ModulePtr->handle) //indicates that it isnt an api set
 			{
-				const DWORD address = reinterpret_cast<DWORD>(GetProcAddress(ModulePtr->handle, ImportName));
-				if (address) ImportTable[y].u1.AddressOfData = ModulePtr->ImageBase + (address - reinterpret_cast<DWORD>(ModulePtr->handle));
+				const DWORD64 address = reinterpret_cast<DWORD64>(GetProcAddress(ModulePtr->handle, ImportName));
+				if (address) ImportTable[y].u1.AddressOfData = ModulePtr->ImageBase + (address - reinterpret_cast<DWORD64>(ModulePtr->handle));
 				else return -14;
 			}
 			else

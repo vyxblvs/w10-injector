@@ -13,104 +13,104 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\gui">
-      <UniqueIdentifier>{286361a8-578c-495b-854c-c5bbd2b9c08e}</UniqueIdentifier>
+    <Filter Include="Header Files\extra">
+      <UniqueIdentifier>{a08f6a95-fbf0-4e30-991b-158b8f781b93}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\gui">
-      <UniqueIdentifier>{86a76450-b6d0-4ab7-972b-fd89c7ac2620}</UniqueIdentifier>
+    <Filter Include="Source Files\extra">
+      <UniqueIdentifier>{4370cb48-bfb8-4ec7-ba43-53d1080fa8ad}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gui_helpers.cpp">
+    <ClCompile Include="..\gui\rendering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gui_main.cpp">
+    <ClCompile Include="..\gui\process_gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="..\gui\gui_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="process_gui.cpp">
+    <ClCompile Include="..\gui\gui_helpers.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="rendering.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\ImGui\imgui_demo.cpp">
-      <Filter>Source Files\gui</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
+    </ClCompile>
+    <ClCompile Include="include\ImGui\imgui_demo.cpp">
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui_draw.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui_impl_glfw.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui_impl_opengl3.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui_tables.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
     <ClCompile Include="include\ImGui\imgui_widgets.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gui\pch.cpp">
+      <Filter>Source Files\extra</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gui_helpers.h">
+    <ClInclude Include="..\gui\gui_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="..\gui\injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="process_gui.h">
+    <ClInclude Include="..\gui\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rendering.h">
+    <ClInclude Include="..\gui\process_gui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gui\rendering.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\GLFW\glfw3.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\GLFW\glfw3native.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imconfig.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imgui.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imgui_impl_glfw.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imgui_impl_opengl3.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imgui_impl_opengl3_loader.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imgui_internal.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imstb_rectpack.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imstb_textedit.h">
-      <Filter>Header Files\gui</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGui\imstb_truetype.h">
-      <Filter>Header Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="injector.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\extra</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="include\libs\glfw3.lib">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\extra</Filter>
     </Library>
   </ItemGroup>
 </Project>

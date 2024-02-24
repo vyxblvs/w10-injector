@@ -1,11 +1,12 @@
 #pragma once
 #include "pch.h"
+#include "injector.h"
 
-#define METHOD_LOADLIBRARY  0
-#define METHOD_MANUAL_MAP   1
+#define _METHOD_LOADLIBRARY  0
+#define _METHOD_MANUAL_MAP   1
 
-#define METHOD_CREATE_THREAD 0
-#define METHOD_HIJACK_THREAD 1
+#define _METHOD_CREATE_THREAD 0
+#define _METHOD_HIJACK_THREAD 1
 
 struct _config
 {
@@ -14,8 +15,8 @@ struct _config
 	bool CheckHandles = true;
 	bool CaseSensitiveFilter = false;
 
-	int InjectionMethod = METHOD_LOADLIBRARY;
-	int ExecutionMethod = METHOD_CREATE_THREAD;
+	int InjectionMethod = _METHOD_LOADLIBRARY;
+	int ExecutionMethod = _METHOD_CREATE_THREAD;
 
 	bool RunTlsCallbacks = true;
 };

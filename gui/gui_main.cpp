@@ -2,6 +2,7 @@
 #include "gui_helpers.h"
 #include "process_gui.h"
 #include "rendering.h"
+#include "injector.h"
 
 std::vector<std::string> ProcessList;
 std::vector<DWORD> PidList;
@@ -138,9 +139,9 @@ void ReadConfig(std::vector<std::string>& ModuleList, char pid[6], const std::st
 		case 2:
 		{
 			if (_stricmp(buffer, "-ManualMap") == 0)
-				cfg.InjectionMethod = METHOD_MANUAL_MAP;
+				cfg.InjectionMethod = _METHOD_MANUAL_MAP;
 
-			else cfg.InjectionMethod = METHOD_LOADLIBRARY;
+			else cfg.InjectionMethod = _METHOD_LOADLIBRARY;
 
 			break;
 		}
@@ -149,9 +150,9 @@ void ReadConfig(std::vector<std::string>& ModuleList, char pid[6], const std::st
 		case 3:
 		{
 			if (_stricmp(buffer, "-CreateRemoteThread") == 0)
-				cfg.ExecutionMethod = METHOD_CREATE_THREAD;
+				cfg.ExecutionMethod = _METHOD_CREATE_THREAD;
 
-			else cfg.ExecutionMethod = METHOD_HIJACK_THREAD;
+			else cfg.ExecutionMethod = _METHOD_HIJACK_THREAD;
 
 			break;
 		}
@@ -434,7 +435,26 @@ static INT WINAPI wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE PrevInsta
 
 		ShowDllOptions(&ofn, ModuleList);
 		
-		ImGui::Button("Inject", { GET_MAX_WIDTH, (ImGui::GetWindowHeight() - ImGui::GetCursorPosY()) - 8 });
+		if (ImGui::Button("Inject", { GET_MAX_WIDTH, (ImGui::GetWindowHeight() - ImGui::GetCursorPosY()) - 8 }))
+		{
+			int flags = 0;
+
+			if (cfg.InjectionMethod == _METHOD_MANUAL_MAP) 
+				flags |= METHOD_MANUAL_MAP;
+
+			if (cfg.ExecutionMethod == _METHOD_HIJACK_THREAD) 
+				flags |= METHOD_HIJACK_THREAD;
+
+			if (cfg.RunTlsCallbacks) 
+				flags |= RUN_TLS_CALLBACKS;
+
+			const HANDLE process = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, false, PidList[CurrentProcess]);
+
+			for (int x = 0; x < ModuleList.size(); ++x)
+			{
+				InjectDll(process, ModuleList[x].c_str(), flags);
+			}
+		}
 
 		EndFrame(window);
 	}
