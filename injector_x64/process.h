@@ -3,11 +3,11 @@
 
 struct _stack_params
 {
-	DWORD ReturnAddress;
-	DWORD lpvReserved = NULL;
-	DWORD fdwReason = DLL_PROCESS_ATTACH;
-	DWORD hinstDLL;
-}; 
+	DWORD64 ReturnAddress;
+	DWORD64 lpvReserved = NULL;
+	DWORD64 fdwReason = DLL_PROCESS_ATTACH;
+	DWORD64 hinstDLL;
+};
 
 //Forward Declarations
 

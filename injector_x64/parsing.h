@@ -7,14 +7,14 @@ struct IMAGE_DATA
 {
 	char* path = nullptr;
 	const char* LocalBase = nullptr;
-	const IMAGE_NT_HEADERS32* NT_HEADERS = nullptr;
+	const IMAGE_NT_HEADERS64* NT_HEADERS = nullptr;
 	const IMAGE_SECTION_HEADER* sections = nullptr;
 };
 
 struct MODULE
 {
 	HMODULE handle = nullptr;
-	DWORD ImageBase = NULL;
+	DWORD64 ImageBase = NULL;
 	IMAGE_DATA image;
 };
 
@@ -52,7 +52,7 @@ int ResolveImports(const IMAGE_DATA* const target);
 #define METHOD_HIJACK_THREAD 0x10
 
 
-template <typename ret> auto ConvertRva(const void* const base, const DWORD rva, const IMAGE_DATA* const image)->ret
+template <typename ret> auto ConvertRva(const void* const base, const DWORD64 rva, const IMAGE_DATA* const image) -> ret
 {
 	const IMAGE_SECTION_HEADER* SectionHeader = image->sections;
 

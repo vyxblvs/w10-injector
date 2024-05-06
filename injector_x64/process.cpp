@@ -27,7 +27,7 @@ int GetProcessHandle(const char* const name)
 				BOOL is_x86;
 				IsWow64Process(process, &is_x86);
 				if (!is_x86) status = -7;
-				
+
 				break;
 			}
 
@@ -54,7 +54,7 @@ int GetLoadedModules()
 
 		path[length] = '\0';
 		MODULE ModuleStruct;
-		
+
 		ModuleStruct.image.path = new char[length + 1];
 		strcpy_s(ModuleStruct.image.path, length + 1, path);
 
@@ -145,7 +145,7 @@ int HijackThread(const int cfg)
 			if (te32.th32OwnerProcessID == PID)
 			{
 				thread = OpenThread(THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME, false, te32.th32ThreadID);
-				if (thread) break; 
+				if (thread) break;
 			}
 
 		} while (Thread32Next(snapshot, &te32));
@@ -164,7 +164,7 @@ int HijackThread(const int cfg)
 	_stack_params stack_params;
 
 	//Getting thread context (GPR's only)
-	WOW64_CONTEXT context { NULL };
+	WOW64_CONTEXT context{ NULL };
 	context.ContextFlags = WOW64_CONTEXT_CONTROL;
 	if (!Wow64GetThreadContext(thread, &context)) { status = -20; goto exit; }
 
@@ -196,19 +196,19 @@ int CreateNewThread(const int cfg)
 {
 	BYTE shellcode[] =
 	{
-		0x31, 0xC0,                   // xor eax, eax
-		0xBB, 0x00, 0x00, 0x00, 0x00, // mov ebx, 0                (0: PLACEHOLDER FOR TLS ADDR ARRAY)
-		0x8B, 0x0C, 0x83,             // mov ecx, [ebx+eax*4]
-		0x85, 0xC9,                   // test ecx, ecx
-		0x74, 0x0D,                   // je 0x0D                   (je 0x0D -> jmp 0)
-		0x6A, 0x00,                   // push 0                    (0:       lpvReserved)
-		0x6A, 0x01,                   // push 1                    (1:       dwReason | DLL_PROCESS_ATTACH)
-		0xFF, 0x74, 0x24, 0x0C,       // push [esp+0x0C]           (esp+0xC: DllBase)
-		0xFF, 0xD1,                   // call ecx                  (ecx:     TLS CALLBACK ADDRESS)
-		0x40,                         // inc eax
-		0xEB, 0xEC,                   // jmp -18                   (jmp -18 -> mov ecx, [ebx+eax*4])
-		0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0                (0: PLACEHOLDER FOR ENTRY POINT)
-		0xFF, 0xE0                    // jmp eax
+		0x48, 0x31, 0xC0,                   // xor rax, rax
+		0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0, // mov rbx, 0
+		0x48, 0x8B, 0x0C, 0x8C,             // mov rcx, [rbx+rax*4]
+		0x48, 0x85, 0xC9,                   // test rcx, rcx
+		0x74, 0x0A,                         // je 0x0A
+		0x6A, 0x00,                         // push 0
+		0x6A, 0x01,                         // push 1
+		0xFF, 0x74, 0x24, 0x0C,             // push [rsp+0x0C]
+		0xFF, 0xD1,                         // call rcx
+		0x48, 0xFF, 0xC0,                   // inc rax
+		0xEB, 0xE8,                         // jmp 0xE8
+		0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0, // mov rax, 0
+		0xFF, 0xE0,                         // jmp rax
 	};
 
 	void* ShellAddress = __VirtualAllocEx(sizeof(shellcode), PAGE_EXECUTE_READWRITE);
@@ -217,11 +217,16 @@ int CreateNewThread(const int cfg)
 	const MODULE& TargetModule = modules[0];
 	const DWORD EntryPoint = GET_ENTRY_POINT(TargetModule.image, TargetModule.ImageBase);
 
-	*reinterpret_cast<DWORD*>(shellcode + 28) = EntryPoint - (reinterpret_cast<DWORD>(ShellAddress) + 27); // ENTRY POINT
-	*reinterpret_cast<DWORD*>(shellcode + 22) = TargetModule.ImageBase;                                    // hinstDLL
-	*reinterpret_cast<DWORD*>(shellcode + 3) = reinterpret_cast<DWORD>(GetTlsEp(ShellAddress));            // TLS ARRAY ADDR
+	*reinterpret_cast<DWORD*>(shellcode + 33) = EntryPoint - (reinterpret_cast<DWORD>(ShellAddress) + 37); // ENTRY POINT
+	*reinterpret_cast<DWORD*>(shellcode + 22) = TargetModule.ImageBase; // hinstDLL
 
 	if (!wpm(ShellAddress, shellcode, sizeof(shellcode))) return -27;
+
+	if (cfg & RUN_TLS_CALLBACKS)
+	{
+		ShellAddress = GetTlsEp(ShellAddress);
+		if (!ShellAddress) return -28;
+	}
 
 	if (!CreateRemoteThread(process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(ShellAddress), nullptr, 0, nullptr)) return -29;
 
