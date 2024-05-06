@@ -178,7 +178,7 @@ int HijackThread(const int cfg)
 
 	if (cfg & RUN_TLS_CALLBACKS)
 	{
-		context.Eip = reinterpret_cast<DWORD>(GetTlsEp(reinterpret_cast<void*>(context.Eip)));
+		context.Eip = reinterpret_cast<DWORD64>(GetTlsEp(reinterpret_cast<void*>(context.Eip)));
 		if (!context.Eip) return -69;
 	}
 
@@ -196,13 +196,13 @@ int CreateNewThread(const int cfg)
 {
 	BYTE shellcode[] =
 	{
-		0x8B, 0x04, 0x24,                               // mov eax, [esp]
-		0xC7, 0x04, 0x24, 0x00, 0x00, 0x00, 0x00,       // mov [esp], 0          (0:    lpvReserved)
-		0xC7, 0x44, 0x24, 0xFC, 0x01, 0x00, 0x00, 0x00, // mov [esp-4], 1        (1:    DLL_PROCESS_ATTACH | fdwReason)
-		0xC7, 0x44, 0x24, 0xF8, 0x00, 0x00, 0x00, 0x00, // mov [esp-8], 0        (0:    PLACEHOLDER FOR hinstDLL)
-		0x83, 0xEC, 0x0C,                               // sub esp, 0xC
-		0x89, 0x04, 0x24,                               // mov [esp], eax        (eax:  return address)
-		0xE9, 0x00, 0x00, 0x00, 0x00                    // jmp 0                 (0:    PLACEHOLDER FOR ENTRY POINT)
+		0x48, 0x8B, 0x04, 0x24, // mov rax, [rsp]
+		0x48, 0xC7, 0x04, 0x24, 0, 0, 0, 0, 0, 0, 0, 0, // mov [rsp], 0
+		0x48, 0xC7, 0x44, 0x24, 0x01, 0, 0, 0, // mov [rsp-8], 1
+		0x48, 0xC7, 0x44, 0x24, 0xF0, 0, 0, 0, 0, // mov [rsp-0x10], 0
+		0x48, 0x83, 0xEC, 0x18, // sub rsp, 0x18
+		0x48, 0x89, 0x04, 0x24, // mov [rsp], rax
+		0x68
 	};
 
 	void* ShellAddress = __VirtualAllocEx(sizeof(shellcode), PAGE_EXECUTE_READWRITE);
